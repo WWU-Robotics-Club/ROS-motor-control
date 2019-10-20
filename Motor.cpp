@@ -7,6 +7,8 @@ Motor::Motor(uint8_t IN1, uint8_t IN2, uint8_t PWM, uint8_t STBY, uint8_t encode
   pinMode(IN2, OUTPUT);
   pinMode(PWM, OUTPUT);
   pinMode(STBY, OUTPUT);
+  // STBY enables the driver
+  digitalWrite(STBY, HIGH);
   pid = new PID(&input, &output, &setpoint,kp,ki,kd, DIRECT);
   encoder = new Encoder(A, B);
   // enable pid control
