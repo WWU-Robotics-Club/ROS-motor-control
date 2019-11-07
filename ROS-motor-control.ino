@@ -1,3 +1,6 @@
+#include <ros.h>
+#include <std_msgs/String.h>
+
 #include "Motor.h"
 
 #define NUM_MOTORS 4
@@ -5,7 +8,17 @@
 // Written for Teensy 3.2
 // Pinout: https://www.pjrc.com/teensy/card7a_rev1.png
 
+ros::NodeHandle nh;
+std_msgs::String str_msg;
+ros::Publisher chatter("chatter", &str_msg);
+
+char hello[13] = "Hello world!";
+
 void setup() {
+  // ROS setup
+  nh.initNode();
+  nh.advertise(chatter);
+  
   // share STBY pin
   // 3rd pin needs to be PWM capable https://www.pjrc.com/teensy/td_pulse.html
   // the last 2 need to have hardware interrupts
@@ -28,4 +41,8 @@ void setup() {
 }
 
 void loop() {
+  str_msg.data = hello;
+  chatter.publish( &str_msg );
+  nh.spinOnce();
+  delay(1000);
 }
