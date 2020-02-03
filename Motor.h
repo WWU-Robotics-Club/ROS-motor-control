@@ -3,6 +3,9 @@
 // https://playground.arduino.cc/Code/PIDLibrary/
 #include <PID_v1.h>
 
+// PID sample time in ms
+#define SAMPLE_TIME 10
+#define OUTPUT_LIMIT 255
 
 /*
  * Motor driver class
@@ -13,6 +16,7 @@ class Motor
 {
 public:
   Motor(uint8_t IN1, uint8_t IN2, uint8_t PWM, uint8_t STBY, uint8_t encoderA, uint8_t encoderB, double kp=2, double ki=5, double kd=1);
+  void init();
   void setPidEnabled(bool enable);
   void setTunings(double kp, double ki, double kd);
   long getPosition();
@@ -21,19 +25,15 @@ public:
 private:
   void write(double power); // todo: pick better name?
   // Motor driver pin numbers
-  const uint8_t IN1;
-  const uint8_t IN2;
-  const uint8_t PWM;
-  const uint8_t STBY;
+  const uint8_t IN1, IN2, PWM, STBY;
   // Encoder pin numbers
   Encoder* encoder;
-  const uint8_t A;
-  const uint8_t B;
+  const uint8_t A, B;
   long lastPos = 0;
+  long lastTime = 0;
   // PID
   PID* pid;
-  bool pidEnabled = true;
-  double setpoint; // target velocity // todo: define units
-  double input; // current velocity // todo: define units
+  double setpoint = 0; // target velocity // todo: define units
+  double input = 0; // current velocity // todo: define units
   double output; // output level // todo: pick what this is. 0-1 or 0-255 or what
 };

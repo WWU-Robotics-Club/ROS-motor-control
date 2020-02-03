@@ -3,16 +3,21 @@
 Motor::Motor(uint8_t IN1, uint8_t IN2, uint8_t PWM, uint8_t STBY, uint8_t encoderA, uint8_t encoderB, double kp, double ki, double kd)
   : IN1(IN1), IN2(IN2), PWM(PWM), STBY(STBY), A(encoderA), B(encoderB)
 {
+  pid = new PID(&input, &output, &setpoint,kp,ki,kd, DIRECT);
+  pid->SetSampleTime(SAMPLE_TIME);
+  pid->SetOutputLimits(-OUTPUT_LIMIT, OUTPUT_LIMIT);
+  encoder = new Encoder(A, B);
+}
+
+void Motor::init() {
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
   pinMode(PWM, OUTPUT);
   pinMode(STBY, OUTPUT);
   // STBY enables the driver
   digitalWrite(STBY, HIGH);
-  pid = new PID(&input, &output, &setpoint,kp,ki,kd, DIRECT);
-  encoder = new Encoder(A, B);
   // enable pid control
-  setPidEnabled(pidEnabled);
+  setPidEnabled(true);
 }
 
 // Enable PID control or pass 
@@ -40,17 +45,21 @@ void Motor::setVelocity(double vel)
 void Motor::update()
 {
   long currentPos = encoder->read();
-  input = currentPos - lastPos;
+  long currentTime = millis();
+  long dT = currentTime - lastTime;
+  input = (double)(currentPos - lastPos)/(double)dT;
   lastPos = currentPos;
-  if (pidEnabled)
-  {
-    pid->Compute();
-    write(output);
-  }
-  else
-  {
-    write(setpoint); // todo: units
-  }
+  lastTime = currentTime;
+  pid->Compute();
+  write(output);
+
+  Serial.print(setpoint);
+  Serial.print(",");
+  Serial.print(getPosition());
+  Serial.print(",");
+  Serial.print(input);
+  Serial.print(",");
+  Serial.println(output);
 }
 
 // Set motor power
