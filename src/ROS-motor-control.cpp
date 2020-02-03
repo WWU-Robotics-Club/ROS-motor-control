@@ -18,7 +18,7 @@ void setup() {
   // ROS setup
   nh.initNode();
   nh.advertise(chatter);
-  
+
   // share STBY pin
   // 3rd pin needs to be PWM capable https://www.pjrc.com/teensy/td_pulse.html
   // the last 2 need to have hardware interrupts
@@ -28,12 +28,12 @@ void setup() {
     Motor(14, 15, 20, 2, 16, 17),
     Motor(18, 19, 21, 2, 22, 23)
   };
-  // pins 5, 10, 20, 21 share the same timer. Set their PWM frequency to something inaudible
+  // pins 5, 10, 20, 21 share the same timer.
+  // Set their PWM frequency to something inaudible
   analogWriteFrequency(5, 36000);
-  
+
   // Turn on all the motors
-  for (unsigned int i = 0; i < NUM_MOTORS; i++)
-  {
+  for (unsigned int i = 0; i < NUM_MOTORS; i++) {
     motors[i].setPidEnabled(false);
     motors[i].setVelocity(100);
     motors[i].update();
@@ -42,7 +42,7 @@ void setup() {
 
 void loop() {
   str_msg.data = hello;
-  chatter.publish( &str_msg );
+  chatter.publish(&str_msg);
   nh.spinOnce();
   delay(1000);
 }
