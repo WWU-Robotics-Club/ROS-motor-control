@@ -13,7 +13,7 @@ char serialData[32];
 Motor motors[NUM_MOTORS] = {
   Motor(3, 4, 5, 2, 6, 7),
   Motor(8, 9, 10, 2, 11, 12),
-  Motor(14, 15, 20, 2, 16, 17),
+  Motor(14, 15, 20, 2, 16, 17, true),
   Motor(18, 19, 21, 2, 22, 23)
 };
 
@@ -39,6 +39,7 @@ void loop() {
   {
     motors[i].update();
   }
+  delay(21);
 }
 
 void parseCommand(char* command) {

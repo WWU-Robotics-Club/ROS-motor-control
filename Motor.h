@@ -4,7 +4,7 @@
 #include <PID_v1.h>
 
 // PID sample time in ms
-#define SAMPLE_TIME 10
+#define SAMPLE_TIME 20
 #define OUTPUT_LIMIT 255
 
 /*
@@ -15,7 +15,7 @@
 class Motor
 {
 public:
-  Motor(uint8_t IN1, uint8_t IN2, uint8_t PWM, uint8_t STBY, uint8_t encoderA, uint8_t encoderB, double kp=2, double ki=5, double kd=1);
+  Motor(uint8_t IN1, uint8_t IN2, uint8_t PWM, uint8_t STBY, uint8_t encoderA, uint8_t encoderB, bool reverse=0, double kp=200, double ki=50, double kd=0);
   void init();
   void setPidEnabled(bool enable);
   void setTunings(double kp, double ki, double kd);
@@ -33,6 +33,7 @@ private:
   long lastTime = 0;
   // PID
   PID* pid;
+  bool reverse;
   double setpoint = 0; // target velocity // todo: define units
   double input = 0; // current velocity // todo: define units
   double output; // output level // todo: pick what this is. 0-1 or 0-255 or what
