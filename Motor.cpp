@@ -3,11 +3,11 @@
 Motor::Motor(uint8_t IN1, uint8_t IN2, uint8_t PWM, uint8_t STBY, uint8_t encoderA, uint8_t encoderB, bool reverse, double kp, double ki, double kd)
   : IN1(IN1), IN2(IN2), PWM(PWM), STBY(STBY), A(encoderA), B(encoderB), reverse(reverse)
 {
-  pid = new PID(&input, &output, &setpoint,kp,ki,kd, DIRECT);
+  /*pid = new PID(&input, &output, &setpoint,kp,ki,kd, DIRECT);
   pid->SetSampleTime(SAMPLE_TIME);
   pid->SetOutputLimits(-OUTPUT_LIMIT, OUTPUT_LIMIT);
   pid->SetControllerDirection(reverse);
-  encoder = new Encoder(A, B);
+  encoder = new Encoder(A, B);*/
 }
 
 void Motor::init() {
@@ -18,7 +18,7 @@ void Motor::init() {
   // STBY enables the driver
   digitalWrite(STBY, HIGH);
   // enable pid control
-  setPidEnabled(true);
+  //setPidEnabled(true);
 }
 
 // Enable PID control or pass 

@@ -22,8 +22,8 @@ public:
   long getPosition();
   void setVelocity(double vel); // todo: define units
   void update(); // update the pids and outpute
-private:
   void write(double power); // todo: pick better name?
+private:
   // Motor driver pin numbers
   const uint8_t IN1, IN2, PWM, STBY;
   // Encoder pin numbers
