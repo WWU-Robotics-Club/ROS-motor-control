@@ -1,5 +1,5 @@
 // Written for Teensy 3.2
-// Pinout: https://www.pjrc.com/teensy/card7a_rev1.png#include <ros.h>
+// Pinout: https://www.pjrc.com/teensy/card7a_rev1.png
 
 #include "Motor.h"
 #include <PulsePosition.h>
@@ -29,8 +29,7 @@ void setup() {
   ppmIn.begin(6);
 
   // Initialize all the motors
-  for (unsigned int i = 0; i < NUM_MOTORS; i++)
-  {
+  for (unsigned int i = 0; i < NUM_MOTORS; i++) {
     motors[i].init();
   }
 }
@@ -66,14 +65,12 @@ void loop() {
 
   /*
     Serial.println();
-    if(Serial.available() > 0)
-    {
+    if(Serial.available() > 0) {
     Serial.readBytesUntil('\n', serialData, 31);
     parseCommand(serialData);
     }
 
-    for (unsigned int i = 0; i < NUM_MOTORS; i++)
-    {
+    for (unsigned int i = 0; i < NUM_MOTORS; i++) {
     motors[i].update();
     }*/
   delay(20);
