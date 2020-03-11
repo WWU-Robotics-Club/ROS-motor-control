@@ -2,15 +2,19 @@
 
 Motor::Motor(uint8_t IN1, uint8_t IN2, uint8_t PWM, uint8_t STBY,
   uint8_t encoderA, uint8_t encoderB, bool reverse,
-  double kp, double ki, double kd)
+  double vkp, double vki, double vkd,
+  double pkp, double pki, double pkd)
   : IN1(IN1), IN2(IN2), PWM(PWM), STBY(STBY),
     A(encoderA), B(encoderB), reverse(reverse)
 {
-  pid = new PID(&input, &output, &setpoint, kp, ki, kd, DIRECT);
-  pid->SetSampleTime(SAMPLE_TIME);
-  pid->SetOutputLimits(-OUTPUT_LIMIT, OUTPUT_LIMIT);
-  pid->SetControllerDirection(reverse);
   encoder = new Encoder(A, B);
+  velPid = new PID(&velInput, &velOutput, &velSetpoint, vkp, vki, vkd, P_ON_E, reverse);
+  velPid->SetSampleTime(SAMPLE_TIME);
+  velPid->SetOutputLimits(-OUTPUT_LIMIT, OUTPUT_LIMIT);
+  // position output controls velocity setpoint
+  posPid = new PID(&posInput, &velSetpoint, &posSetpoint, pkp, pki, pkd, P_ON_E, DIRECT);
+  posPid->SetSampleTime(SAMPLE_TIME);
+  posPid->SetOutputLimits(-SPEED_LIMIT, SPEED_LIMIT);
 }
 
 void Motor::init() {
@@ -21,54 +25,90 @@ void Motor::init() {
   // STBY enables the driver
   digitalWrite(STBY, HIGH);
   encoder = new Encoder(A, B);
-  // enable pid control
   setPidEnabled(true);
 }
 
 // Enable PID control or pass 
 void Motor::setPidEnabled(bool enable) {
-  pid->SetMode(enable ? AUTOMATIC : MANUAL);
+  velPid->SetMode(enable ? AUTOMATIC : MANUAL);
+  posPid->SetMode(enable ? AUTOMATIC : MANUAL);
 }
 
-void Motor::setTunings(double kp, double ki, double kd) {
-  pid->SetTunings(kp, ki, kd);
+void Motor::setVelTunings(double kp, double ki, double kd) {
+  velPid->SetTunings(kp, ki, kd);
 }
 
-int32_t Motor::getPosition() {
-  return encoder->read();
+void Motor::setPosTunings(double kp, double ki, double kd) {
+  posPid->SetTunings(kp, ki, kd);
+}
+
+double Motor::getPosition() {
+  return (double)encoder->read() / COUNTS_PER_REV;
+}
+
+// set desired position in revolutions
+void Motor::setPosition(double pos) {
+  posSetpoint = pos;
+  controlMode = POS_CONTROL;
+}
+
+double Motor::getVelocity() {
+  return lastVel;
 }
 
 // Update the target velocity
 void Motor::setVelocity(double vel) {
-  setpoint = vel;
+  velSetpoint = vel;
+  controlMode = VEL_CONTROL;
 }
 
 void Motor::update() {
-  int32_t currentPos = encoder->read();
+  double currentPos = getPosition();
   int32_t currentTime = millis();
-  int32_t dT = currentTime - lastTime;
-  input = (double)(currentPos - lastPos)/(double)dT;
-  lastPos = currentPos;
-  lastTime = currentTime;
-  if (pid->Compute()) {
-    write(output);
+  double dT = (currentTime - lastTime) / 1000.0; // elapsed time in seconds
+  if (controlMode == POS_CONTROL) {
+    posInput = currentPos;
+    // this sets velSetpoint
+    posPid->Compute();
+  }
+  velInput = (currentPos - lastPos)/dT; // revs/s
+  if (velPid->Compute()) {
+    int32_t timeSincePrint = currentTime - lastPrintTime;
+
+    lastPos = currentPos;
+    lastVel = velInput;
+    lastTime = currentTime;
+    // if error is 0, the integral never goes to 0 even if output is zero
+    // prevents wasting power
+    if (velSetpoint == 0.0 && lastVel == 0.0) {
+      velOutput = 0.0;
+    }
+    write(velOutput);
   
-    Serial.print(setpoint);
-    Serial.print(",");
-    Serial.print(getPosition());
-    Serial.print(",");
-    Serial.print(input);
-    Serial.print(",");
-    Serial.println(output);
+    if (timeSincePrint > 200) {
+      lastPrintTime = currentTime;
+      
+      Serial.print(reverse ? "R," : "F,");
+      Serial.print(posSetpoint);
+      Serial.print(",");
+      Serial.print(posInput);
+      Serial.print(",");
+      Serial.print(velSetpoint);
+      Serial.print(",");
+      Serial.print(getPosition());
+      Serial.print(",");
+      Serial.print(velInput);
+      Serial.print(",");
+      Serial.println(velOutput);
+    }
   }
 }
 
-// Set motor power
-void Motor::write(double power) {
-  // Todo: check all this. Maybe add something to handle both sides better
+// Set motor power from -OUTPUT_LIMIT to OUTPUT_LIMIT
+void Motor::write(int16_t power) {
   // Both high when vel == 0 which makes it brake.
   // Both low would be free spin which is kinda the same on gear motors
   digitalWrite(IN1, power >= 0);
   digitalWrite(IN2, power <= 0);
-  analogWrite(PWM, abs(power)); // todo:  figure out units and make any needed conversions
+  analogWrite(PWM, min(abs(power), OUTPUT_LIMIT));
 }

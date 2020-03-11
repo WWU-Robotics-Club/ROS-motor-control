@@ -13,14 +13,14 @@ char serialData[32];
 Motor motors[NUM_MOTORS] = {
   Motor(3, 4, 5, 2, 6, 7),
   Motor(8, 9, 10, 2, 11, 12),
-  Motor(14, 15, 20, 2, 16, 17, true),
-  Motor(18, 19, 21, 2, 22, 23)
+  Motor(14, 15, 20, 2, 16, 17),
+  Motor(18, 19, 21, 2, 22, 23, REVERSE)
 };
 
 void parseCommand(char* command) {
-  int numbers[4];
+  /*int numbers[4];
   char* strtokIndx = strtok(command, ","); // get the first part
-  numbers[0] = atoi(strtokIndx); // convert to int
+  numbers[0] = atof(strtokIndx); // convert to float
   
   strtokIndx = strtok(NULL, ","); // this continues where the previous call left off
   numbers[1] = atof(strtokIndx);
@@ -31,10 +31,10 @@ void parseCommand(char* command) {
   strtokIndx = strtok(NULL, ",");
   numbers[3] = atof(strtokIndx);
 
-  for (unsigned int i = 0; i < NUM_MOTORS; i++)
-  {
+  for (unsigned int i = 0; i < NUM_MOTORS; i++) {
     motors[i].setVelocity(numbers[i]);
-  }
+  }*/
+  motors[3].setPosition(atof(command));
 }
 
 void setup() {  
@@ -49,15 +49,13 @@ void setup() {
 }
 
 void loop() {
-  if(Serial.available() > 0)
-  {
+  if(Serial.available() > 0) {
     Serial.readBytesUntil('\n', serialData, 31);
     parseCommand(serialData);
   }
 
-  for (unsigned int i = 0; i < NUM_MOTORS; i++)
-  {
+  for (unsigned int i = 3; i < NUM_MOTORS; i++) { // todo change back to 0
     motors[i].update();
   }
-  delay(21);
+  //delay(21);
 }
