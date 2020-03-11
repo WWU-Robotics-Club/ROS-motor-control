@@ -17,6 +17,26 @@ Motor motors[NUM_MOTORS] = {
   Motor(18, 19, 21, 2, 22, 23)
 };
 
+void parseCommand(char* command) {
+  int numbers[4];
+  char* strtokIndx = strtok(command, ","); // get the first part
+  numbers[0] = atoi(strtokIndx); // convert to int
+  
+  strtokIndx = strtok(NULL, ","); // this continues where the previous call left off
+  numbers[1] = atof(strtokIndx);
+
+  strtokIndx = strtok(NULL, ",");
+  numbers[2] = atof(strtokIndx);
+
+  strtokIndx = strtok(NULL, ",");
+  numbers[3] = atof(strtokIndx);
+
+  for (unsigned int i = 0; i < NUM_MOTORS; i++)
+  {
+    motors[i].setVelocity(numbers[i]);
+  }
+}
+
 void setup() {  
   // pins 5, 10, 20, 21 share the same timer. Set their PWM frequency to something inaudible
   analogWriteFrequency(5, 36000);
@@ -40,24 +60,4 @@ void loop() {
     motors[i].update();
   }
   delay(21);
-}
-
-void parseCommand(char* command) {
-  int numbers[4];
-  char* strtokIndx = strtok(command, ","); // get the first part
-  numbers[0] = atoi(strtokIndx); // convert to int
-  
-  strtokIndx = strtok(NULL, ","); // this continues where the previous call left off
-  numbers[1] = atof(strtokIndx);
-
-  strtokIndx = strtok(NULL, ",");
-  numbers[2] = atof(strtokIndx);
-
-  strtokIndx = strtok(NULL, ",");
-  numbers[3] = atof(strtokIndx);
-
-  for (unsigned int i = 0; i < NUM_MOTORS; i++)
-  {
-    motors[i].setVelocity(numbers[i]);
-  }
 }
