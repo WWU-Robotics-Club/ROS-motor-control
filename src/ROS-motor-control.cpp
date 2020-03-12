@@ -2,6 +2,7 @@
 // Pinout: https://www.pjrc.com/teensy/card7a_rev1.png#include <ros.h>
 
 #include "Motor.h"
+#include "MecanumController.h"
 
 #define NUM_MOTORS 4
 
@@ -16,6 +17,8 @@ Motor motors[NUM_MOTORS] = {
   Motor(14, 15, 20, 2, 16, 17),
   Motor(18, 19, 21, 2, 22, 23, REVERSE)
 };
+
+//MecanumController mecControl(&motors);
 
 void parseCommand(char* command) {
   /*int numbers[4];
@@ -34,6 +37,7 @@ void parseCommand(char* command) {
   for (unsigned int i = 0; i < NUM_MOTORS; i++) {
     motors[i].setVelocity(numbers[i]);
   }*/
+  //motors[3].setVelocity(atof(command));
   motors[3].setPosition(atof(command));
 }
 
@@ -41,10 +45,12 @@ void setup() {
   // pins 5, 10, 20, 21 share the same timer. Set their PWM frequency to something inaudible
   analogWriteFrequency(5, 36000);
   
+  //mecControl.init();
+
   // Initialize all the motors
-  for (unsigned int i = 0; i < NUM_MOTORS; i++)
-  {
+  for (unsigned int i = 0; i < NUM_MOTORS; i++) {
     motors[i].init();
+    motors[i].setAcceleration(3.0);
   }
 }
 
