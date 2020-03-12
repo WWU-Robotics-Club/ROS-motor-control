@@ -10,8 +10,8 @@ Motor::Motor(uint8_t IN1, uint8_t IN2, uint8_t PWM, uint8_t STBY,
   encoder = new Encoder(A, B);
   velPid = new PID(&velInput, &velOutput, &velSetpoint, vkp, vki, vkd, P_ON_E, feedbackDir);
   setOutputLimit(outputLimit);
-  // position output controls velocity setpoint
-  posPid = new PID(&posInput, &velSetpoint, &posSetpoint, pkp, pki, pkd, P_ON_E, DIRECT);
+  // position output controls velocity target setpoint
+  posPid = new PID(&posInput, &velTargetSetpoint, &posSetpoint, pkp, pki, pkd, P_ON_E, DIRECT);
   setPositionMoveVelocity(posMoveVelocity);
   setSampleTimeMs(sampleTimeMs);
 }
@@ -103,11 +103,11 @@ void Motor::update() {
   double dT = (currentTime - lastTime) / 1000.0; // elapsed time in seconds
   if (controlMode == POS_CONTROL) {
     posInput = currentPos;
-    // Compute() sets velSetpoint
+    // Compute() sets velTargetSetpoint
     if(posPid->Compute()) {
       // invert if this motor is reversed
       if (direction == REVERSE) {
-        velSetpoint = -velSetpoint;
+        velTargetSetpoint = -velTargetSetpoint;
       }
       updateAcceleration();
     }

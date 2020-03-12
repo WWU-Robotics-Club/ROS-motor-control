@@ -17,7 +17,7 @@ class Motor {
   Motor(uint8_t IN1, uint8_t IN2, uint8_t PWM, uint8_t STBY,
   uint8_t encoderA, uint8_t encoderB, int feedbackDir = DIRECT, int direction = DIRECT,
   double vkp=200, double vki=50, double vkd=0,
-  double pkp=15, double pki=0, double pkd=0);
+  double pkp=8, double pki=0, double pkd=0);
   ~Motor();
   void init();
   void setSampleTimeMs(uint16_t ms);

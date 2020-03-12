@@ -50,7 +50,7 @@ void setup() {
   // Initialize all the motors
   for (unsigned int i = 0; i < NUM_MOTORS; i++) {
     motors[i].init();
-    motors[i].setAcceleration(3.0);
+    motors[i].setAcceleration(25.0);
   }
 }
 
@@ -63,5 +63,4 @@ void loop() {
   for (unsigned int i = 3; i < NUM_MOTORS; i++) { // todo change back to 0
     motors[i].update();
   }
-  //delay(21);
 }
