@@ -138,7 +138,7 @@ void Motor::update() {
     if (currentTime - lastPrintTime > 200) {
       lastPrintTime = currentTime;
       
-      Serial.print(acc >  ? "R," : "F,");
+      //Serial.print(acc >  ? "R," : "F,");
       Serial.print(posSetpoint);
       Serial.print(",");
       Serial.print(currentPos);
