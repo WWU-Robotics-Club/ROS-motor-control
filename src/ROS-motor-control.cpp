@@ -1,10 +1,20 @@
 // Written for Teensy 3.2
 // Pinout: https://www.pjrc.com/teensy/card7a_rev1.png#include <ros.h>
 
+#include "ros.h"
+#include "std_msgs/String.h"
+
 #include "Motor.h"
 #include "MecanumController.h"
 
+
+
 #define NUM_MOTORS 4
+
+ros::NodeHandle n;
+std_msgs::String str_msg;
+ros::Publisher position_pub("/wheels_position",&str_msg);
+
 
 char serialData[32];
 
@@ -40,8 +50,15 @@ void parseCommand(char* command) {
   //motors[3].setVelocity(atof(command));
   motors[3].setPosition(atof(command));
 }
+ 
+ void velocity_cb( const std_msgs::String& cmd_msg){
+     parseCommand(cmd_msg.data); 
+  }
+
+ros::Subscriber<std_msgs::String> sub("/wheel_velocity", velocity_cb);
 
 void setup() {  
+   n.initNode();
   // pins 5, 10, 20, 21 share the same timer. Set their PWM frequency to something inaudible
   analogWriteFrequency(5, 36000);
   
@@ -52,9 +69,13 @@ void setup() {
     motors[i].init();
     motors[i].setAcceleration(3.0);
   }
+
 }
 
 void loop() {
+ 
+
+  
   if(Serial.available() > 0) {
     Serial.readBytesUntil('\n', serialData, 31);
     parseCommand(serialData);
@@ -64,4 +85,6 @@ void loop() {
     motors[i].update();
   }
   //delay(21);
+//pub.publish()
+  n.spinOnce();
 }
