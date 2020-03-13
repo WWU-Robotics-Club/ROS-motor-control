@@ -59,6 +59,7 @@ ros::Subscriber<std_msgs::String> sub("/wheel_velocity", velocity_cb);
 
 void setup() {  
    n.initNode();
+  n.subscribe(sub);
   // pins 5, 10, 20, 21 share the same timer. Set their PWM frequency to something inaudible
   analogWriteFrequency(5, 36000);
   
@@ -76,10 +77,10 @@ void loop() {
  
 
   
-  if(Serial.available() > 0) {
+  /*if(Serial.available() > 0) {
     Serial.readBytesUntil('\n', serialData, 31);
     parseCommand(serialData);
-  }
+  }*/
 
   for (unsigned int i = 3; i < NUM_MOTORS; i++) { // todo change back to 0
     motors[i].update();
