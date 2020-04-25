@@ -12,7 +12,7 @@ Motor::Motor(uint8_t IN1, uint8_t IN2, uint8_t PWM, uint8_t STBY,
   setOutputLimit(outputLimit);
   // position output controls velocity target setpoint
   posPid = new PID(&posInput, &velTargetSetpoint, &posSetpoint, pkp, pki, pkd, P_ON_E, DIRECT);
-  setPositionMoveVelocity(posMoveVelocity);
+  setPositionSpeed(posMoveVelocity);
   setSampleTimeMs(sampleTimeMs);
 }
 
@@ -27,6 +27,11 @@ void Motor::init() {
   setPidEnabled(true);
 }
 
+void Motor::setStandby(bool standby) {
+  setPidEnabled(!standby); // disable PID if in standby
+  digitalWrite(STBY, !standby); // disable driver if in standby
+}
+
 void Motor::setSampleTimeMs(uint16_t ms) {
   sampleTimeMs = ms;
   velPid->SetSampleTime(sampleTimeMs);
@@ -38,7 +43,7 @@ void Motor::setOutputLimit(int16_t limit) {
   velPid->SetOutputLimits(-outputLimit, outputLimit);
 }
 
-void Motor::setPositionMoveVelocity(double limit) {
+void Motor::setPositionSpeed(double limit) {
   posMoveVelocity = limit;
   posPid->SetOutputLimits(-posMoveVelocity, posMoveVelocity);
 }

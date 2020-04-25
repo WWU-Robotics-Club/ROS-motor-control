@@ -20,10 +20,11 @@ class Motor {
   double pkp=8, double pki=0, double pkd=0);
   ~Motor();
   void init();
+  void setStandby(bool standby);
   void setSampleTimeMs(uint16_t ms);
   void setCountsPerRev(uint16_t counts);
   void setOutputLimit(int16_t limit);  // set the max analogWrite value
-  void setPositionMoveVelocity(double limit);  // set max target revs/s used by setPosition
+  void setPositionSpeed(double limit);  // set max target revs/s used by setPosition
   void setPidEnabled(bool enable);
   void setVelTunings(double kp, double ki, double kd);
   void setPosTunings(double kp, double ki, double kd);
