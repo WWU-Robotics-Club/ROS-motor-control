@@ -1,30 +1,42 @@
 #include "Motor.h"
 
 Motor::Motor(uint8_t IN1, uint8_t IN2, uint8_t PWM, uint8_t STBY,
-  uint8_t encoderA, uint8_t encoderB, int feedbackDir, int direction,
+  uint8_t encoderA, uint8_t encoderB, int8_t encoderChannel, int feedbackDir, int direction,
   double vkp, double vki, double vkd,
   double pkp, double pki, double pkd)
   : IN1(IN1), IN2(IN2), PWM(PWM), STBY(STBY),
-    A(encoderA), B(encoderB), feedbackDir(feedbackDir), direction(direction)
+    A(encoderA), B(encoderB), encoderChannel(encoderChannel),
+    feedbackDir(feedbackDir), direction(direction)
 {
-  encoder = new Encoder(A, B);
   velPid = new PID(&velInput, &velOutput, &velSetpoint, vkp, vki, vkd, P_ON_E, feedbackDir);
   setOutputLimit(outputLimit);
-  // position output controls velocity setpoint
-  posPid = new PID(&posInput, &velSetpoint, &posSetpoint, pkp, pki, pkd, P_ON_E, DIRECT);
-  setPositionMoveVelocity(posMoveVelocity);
+  // position output controls velocity target setpoint
+  posPid = new PID(&posInput, &velTargetSetpoint, &posSetpoint, pkp, pki, pkd, P_ON_E, DIRECT);
+  setPositionSpeed(posMoveVelocity);
   setSampleTimeMs(sampleTimeMs);
 }
 
 void Motor::init() {
+#ifdef USING_QUADENCODER
+    encoder = new Encoder(encoderChannel, A, B);
+    encoder->setInitConfig();
+    encoder->init();
+#else
+    encoder = new Encoder(A, B);
+#endif
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
   pinMode(PWM, OUTPUT);
   pinMode(STBY, OUTPUT);
   // STBY enables the driver
   digitalWrite(STBY, HIGH);
-  encoder = new Encoder(A, B);
+  
   setPidEnabled(true);
+}
+
+void Motor::setStandby(bool standby) {
+  setPidEnabled(!standby); // disable PID if in standby
+  digitalWrite(STBY, !standby); // disable driver if in standby
 }
 
 void Motor::setSampleTimeMs(uint16_t ms) {
@@ -38,7 +50,7 @@ void Motor::setOutputLimit(int16_t limit) {
   velPid->SetOutputLimits(-outputLimit, outputLimit);
 }
 
-void Motor::setPositionMoveVelocity(double limit) {
+void Motor::setPositionSpeed(double limit) {
   posMoveVelocity = limit;
   posPid->SetOutputLimits(-posMoveVelocity, posMoveVelocity);
 }
@@ -58,10 +70,14 @@ void Motor::setPosTunings(double kp, double ki, double kd) {
 }
 
 double Motor::getPosition() {
-  return (double)encoder->read() / countsPerRev;
+  if (direction == REVERSE) {
+    return -(double)encoder->read() * radsPerCount;
+  } else {
+    return (double)encoder->read() * radsPerCount;
+  }
 }
 
-// set desired position in revolutions
+// set desired position in radians
 void Motor::setPosition(double pos) {
   posSetpoint = pos;
   controlMode = POS_CONTROL;
@@ -74,18 +90,13 @@ double Motor::getVelocity() {
 // Update the target velocity
 void Motor::setVelocity(double vel) {
   controlMode = VEL_CONTROL;
-  // invert if this motor is reversed
-  if (direction == REVERSE) {
-    velTargetSetpoint = -vel;
-  } else {
-    velTargetSetpoint = vel;
-  }
+  velTargetSetpoint = vel;
   updateAcceleration();
 }
 
 void Motor::setAcceleration(double acc) {
-  // convert revs/s^2 to revs/s/SAMPLE_TIME
-  accel = acc * 0.001 * sampleTimeMs;
+  // convert rads/s^2 to rads/s/SAMPLE_TIME
+  accel = acc * sampleTimeMs * 0.001;
   updateAcceleration();
 }
 
@@ -103,16 +114,12 @@ void Motor::update() {
   double dT = (currentTime - lastTime) / 1000.0; // elapsed time in seconds
   if (controlMode == POS_CONTROL) {
     posInput = currentPos;
-    // Compute() sets velSetpoint
+    // Compute() sets velTargetSetpoint
     if(posPid->Compute()) {
-      // invert if this motor is reversed
-      if (direction == REVERSE) {
-        velSetpoint = -velSetpoint;
-      }
       updateAcceleration();
     }
   }
-  velInput = (currentPos - lastPos)/dT; // revs/s
+  velInput = (currentPos - lastPos)/dT; // rads/s
   if (velPid->Compute()) {
     // handle acceleration
     if (velSetpoint != velTargetSetpoint) {
@@ -138,7 +145,8 @@ void Motor::update() {
     if (currentTime - lastPrintTime > 200) {
       lastPrintTime = currentTime;
       
-      /*//Serial.print(acc >  ? "R," : "F,");
+#if defined(MOTOR_DEBUG)
+      //Serial.print(acc >  ? "R," : "F,");
       Serial.print(posSetpoint);
       Serial.print(",");
       Serial.print(currentPos);
@@ -151,13 +159,17 @@ void Motor::update() {
       Serial.print(",");
       Serial.print(velTargetSetpoint);
       Serial.print(",");
-      Serial.println(accel);*/
+      Serial.println(accel);
+#endif
     }
   }
 }
 
 // Set motor power from -OUTPUT_LIMIT to OUTPUT_LIMIT
 void Motor::write(int16_t power) {
+  if (direction == REVERSE) {
+    power = -power;
+  }
   // Both high when vel == 0 which makes it brake.
   // Both low would be free spin which is kinda the same on gear motors
   digitalWrite(IN1, power >= 0);
