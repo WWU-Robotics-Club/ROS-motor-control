@@ -7,7 +7,7 @@
 
 #define NUM_MOTORS 4
 
-#define MEC_DEBUG
+//#define MEC_DEBUG
 
 struct Pose2D {
   double x;
@@ -55,7 +55,8 @@ class MecanumController {
   const double baseWidth;
   const double baseLength;
   const double wheelRadius;
-  double speedLimit = 10.0;
+  double speedLimit = 1.5; // m/s
+  int32_t lastPrintTime = 0;
 };
 
 #endif  // ARDUINO_ROS_MOTOR_CONTROL_LIB_MECANUMCONTROLLER_MECANUMCONTROLLER_H_

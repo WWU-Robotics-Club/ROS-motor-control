@@ -81,7 +81,7 @@ class Motor {
   const double countsPerRev = 1440.0;  // encoder counts per revolution
   const double radsPerCount = 2.0 * 3.14159 / countsPerRev;
   int16_t outputLimit = 160;
-  double posMoveVelocity = 25;  // rad/s
+  double posMoveVelocity = 25.0;  // rad/s
   double accel = 0.6;  // target accelleration in rad/s/sample_time
   int direction;  // 0 for normal, 1 to reverse direction
 };

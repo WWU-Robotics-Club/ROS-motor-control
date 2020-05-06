@@ -1,22 +1,27 @@
-// Written for Teensy 3.2
-// Pinout: https://www.pjrc.com/teensy/card7a_rev1.png#include <ros.h>
+// Written for Teensy 3.2 and 4.0
+// Pinout: https://www.pjrc.com/teensy/card7a_rev1.png
 
-#include "ros.h"
-#include "std_msgs/String.h"
-
+#include <Arduino.h>
 #include "Motor.h"
 #include "MecanumController.h"
 
+// comment out to use serial commands
+#define USE_ROS
 
+#ifdef USE_ROS
+#include "ros.h"
+#include "geometry_msgs/Pose.h"
+#include "geometry_msgs/Twist.h"
+#include "std_msgs/Float32.h"
+// milliseconds between publishing
+#define ROS_PUB_INTERVAL 50
+#endif
 
 #define NUM_MOTORS 4
 #define BASE_WIDTH 0.210
 #define BASE_LENGTH 0.165
 #define WHEEL_RADIUS 0.059
 
-ros::NodeHandle n;
-std_msgs::String str_msg;
-ros::Publisher position_pub("/wheels_position",&str_msg);
 #if defined(__IMXRT1062__) // Teensy 4.0
   Motor motors[NUM_MOTORS] = {
     Motor(14, 15, 8, 31, 0, 1, 1, REVERSE, DIRECT),
@@ -40,6 +45,35 @@ ros::Publisher position_pub("/wheels_position",&str_msg);
 
 MecanumController mecControl(motors, BASE_WIDTH, BASE_LENGTH, WHEEL_RADIUS);
 
+#ifdef USE_ROS
+float moveSpeed = 0.5; // m/s
+uint32_t lastPubTime = 0; // ms
+
+void velocityCallback( const geometry_msgs::Twist& twist) {
+  Pose2D vel = {twist.linear.x, twist.linear.y, twist.angular.z};
+  mecControl.setVelocity(vel);
+}
+
+void moveCallback( const geometry_msgs::Pose& pose) {
+  Pose2D position = {pose.position.x, pose.position.y, pose.orientation.z};
+  mecControl.move(position, moveSpeed);
+}
+
+void moveSpeedCallback( const std_msgs::Float32& speed) {
+  moveSpeed = speed.data;
+}
+
+ros::NodeHandle node;
+geometry_msgs::Twist velMsg;
+geometry_msgs::Pose posMsg;
+ros::Publisher velocityPub("/wheels/odom_velocity",&posMsg);
+ros::Publisher positionPub("/wheels/odom_position",&posMsg);
+
+ros::Subscriber<geometry_msgs::Twist> velocitySub("/wheels/cmd_velocity", velocityCallback);
+ros::Subscriber<geometry_msgs::Pose> moveSub("/wheels/cmd_move", moveCallback);
+ros::Subscriber<std_msgs::Float32> moveSpeedSub("/wheels/cmd_move_speed", moveSpeedCallback);
+
+#else
 char serialData[32];
 
 void printPose(Pose2D p) {
@@ -85,17 +119,15 @@ void parseCommand(char* command) {
     Serial.println(speed);
   }
 }
- 
- void velocity_cb( const std_msgs::String& cmd_msg){
-     parseCommand(cmd_msg.data); 
-  }
+#endif
 
-ros::Subscriber<std_msgs::String> sub("/wheel_velocity", velocity_cb);
-
-void setup() {  
-  n.initNode();
-  n.subscribe(sub);
-
+void setup() {
+#ifdef USE_ROS
+  node.initNode();
+  node.subscribe(velocitySub);
+  node.subscribe(moveSub);
+  node.subscribe(moveSpeedSub);
+#endif
 #if defined(__IMXRT1062__) // Teensy 4.0
   // Set their PWM frequency to something inaudible
   analogWriteFrequency(8, 36000);
@@ -111,13 +143,27 @@ void setup() {
 }
 
 void loop() {
-  /*if(Serial.available() > 0) {
+#ifdef USE_ROS
+  node.spinOnce();
+  // publish topics every ROS_PUB_INTERVAL milliseconds
+  if (millis() - lastPubTime > ROS_PUB_INTERVAL) {
+    lastPubTime = millis();
+    Pose2D vel = mecControl.getVelocity();
+    velMsg.linear.x = vel.x;
+    velMsg.linear.y = vel.y;
+    velMsg.angular.z = vel.theta;
+    Pose2D pos = mecControl.getPosition();
+    posMsg.position.x = pos.x;
+    posMsg.position.y = pos.y;
+    posMsg.orientation.z = pos.theta;
+    velocityPub.publish(&velMsg);
+    positionPub.publish(&posMsg);
+  }
+#else
+  if(Serial.available() > 0) {
     Serial.readBytesUntil(';', serialData, 31);
     parseCommand(serialData);
-  }*/
-
-  //delay(21);
-  //pub.publish()
-  n.spinOnce();
+  }
+#endif
   mecControl.update();
 }

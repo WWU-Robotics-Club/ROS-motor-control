@@ -12,14 +12,25 @@ void MecanumController::init() {
 }
 
 void MecanumController::update() {
+#ifdef MEC_DEBUG
+  int32_t lastMicros = micros();
+#endif
   for (unsigned int i = 0; i < NUM_MOTORS; i++) {
     motors[i].update();
   }
+#ifdef MEC_DEBUG
+  int32_t dt = micros() - lastMicros;
+  if (millis() - lastPrintTime > 200) {
+    lastPrintTime = millis();
+    Serial.print("Mec update us: ");
+    Serial.println(dt);
+  }
+#endif
 }
 
 // speed is the max speed for a motor
 void MecanumController::move(const Pose2D &relativePos, double speed) {
-  speed = min(speed, speedLimit);
+  speed = min(speed, speedLimit) / wheelRadius; // rad/s
   double wheelRots[NUM_MOTORS];
   getWheelRotations(wheelRots);
 #ifdef MEC_DEBUG
