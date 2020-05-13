@@ -4,6 +4,7 @@ MecanumController::MecanumController(
   Motor* motors, float baseWidth, float baseLength, float wheelRadius)
 : baseWidth(baseWidth), baseLength(baseLength), wheelRadius(wheelRadius) {
   this->motors = motors;
+  setSpeedLimit(speedLimitMps);
 }
 
 void MecanumController::init() {
@@ -29,9 +30,9 @@ void MecanumController::update() {
 #endif
 }
 
-// speed is the max speed for a motor
+// speed is the max speed for a motor. Must be positive
 void MecanumController::move(const Pose2D &relativePos, double speed) {
-  speed = min(speed, speedLimit) / wheelRadius;  // rad/s
+  speed = min(abs(speed), speedLimitMps) / wheelRadius;  // rad/s
   double wheelRots[NUM_MOTORS];
   getWheelRotations(wheelRots);
 #ifdef MEC_DEBUG
@@ -47,8 +48,8 @@ void MecanumController::move(const Pose2D &relativePos, double speed) {
   // find largest rotation a motor will have to make. For scaling speeds
   double maxRot = 0.0;
   for (unsigned int i = 0; i < NUM_MOTORS; i++) {
-    if (relativeWheelRots[i] > maxRot) {
-      maxRot = relativeWheelRots[i];
+    if (abs(relativeWheelRots[i]) > maxRot) {
+      maxRot = abs(relativeWheelRots[i]);
     }
   }
 #ifdef MEC_DEBUG
@@ -61,7 +62,7 @@ void MecanumController::move(const Pose2D &relativePos, double speed) {
     Serial.print("  ");
 #endif
     // scale speeds so the wheels reach their position at the same time
-    motors[i].setPositionSpeed(speed * relativeWheelRots[i] / maxRot);
+    motors[i].setPositionSpeed(speed * abs(relativeWheelRots[i]) / maxRot);
   }
 #ifdef MEC_DEBUG
     Serial.println("");
@@ -97,15 +98,16 @@ void MecanumController::setVelocity(const Pose2D &vel) {
   Serial.println("");
 #endif
   // scale speeds so they don't go over a limit
+  // these speeds are in rad/s
   double highestSpeed = 0.0;
   for (unsigned int i = 0; i < NUM_MOTORS; i++) {
-    if (speeds[i] > highestSpeed) {
-      highestSpeed = speeds[i];
+    if (abs(speeds[i]) > highestSpeed) {
+      highestSpeed = abs(speeds[i]);
     }
   }
   double scalar = 1.0;
-  if (highestSpeed > speedLimit) {
-    scalar = speedLimit / highestSpeed;
+  if (highestSpeed > speedLimitRadps) {
+    scalar = speedLimitRadps / highestSpeed;
   }
   for (unsigned int i = 0; i < NUM_MOTORS; i++) {
     motors[i].setVelocity(speeds[i] * scalar);
@@ -140,7 +142,8 @@ void MecanumController::setOutputLimit(int16_t limit) {
 }
 
 void MecanumController::setSpeedLimit(double limit) {
-  speedLimit = limit;
+  speedLimitMps = abs(limit);
+  speedLimitRadps = speedLimitMps / wheelRadius;
 }
 
 void MecanumController::poseToWheels(const Pose2D &pose, double* wheels) {

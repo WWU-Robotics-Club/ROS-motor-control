@@ -53,7 +53,7 @@ void Motor::setOutputLimit(int16_t limit) {
 }
 
 void Motor::setPositionSpeed(double limit) {
-  posMoveVelocity = limit;
+  posMoveVelocity = abs(limit);
   posPid->SetOutputLimits(-posMoveVelocity, posMoveVelocity);
 }
 

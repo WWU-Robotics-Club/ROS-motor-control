@@ -51,7 +51,7 @@ class MecanumController {
   Pose2D getVelocity();
   void setAcceleration(double accel);  //  set acceleration in rad/s^2
   void setOutputLimit(int16_t limit);  // set the max analogWrite value
-  void setSpeedLimit(double limit);  // set the max target rad/s
+  void setSpeedLimit(double limit);  // set the max target m/s
   enum WheelPositions {W_FR = 0, W_BR = 1, W_FL = 2, W_BL = 3};
 
  private:
@@ -65,7 +65,8 @@ class MecanumController {
   const double baseWidth;
   const double baseLength;
   const double wheelRadius;
-  double speedLimit = 1.5;  // m/s
+  double speedLimitMps = 1.5;  // m/s
+  double speedLimitRadps;  // rads/s
   int32_t lastPrintTime = 0;
 };
 

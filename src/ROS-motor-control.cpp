@@ -46,7 +46,7 @@
 MecanumController mecControl(motors, BASE_WIDTH, BASE_LENGTH, WHEEL_RADIUS);
 
 #ifdef USE_ROS
-float moveSpeed = 0.5;  // m/s
+float moveSpeed = 1.0;  // m/s
 uint32_t lastPubTime = 0;  // ms
 
 void velocityCallback(const geometry_msgs::Twist& twist) {
@@ -154,7 +154,7 @@ void loop() {
     Pose2D vel = mecControl.getVelocity();
     velMsg.linear.x = vel.x;
     velMsg.linear.y = vel.y;
-    velMsg.angular.z = (vel.theta;
+    velMsg.angular.z = vel.theta;
     Pose2D pos = mecControl.getPosition();
     posMsg.position.x = pos.x;
     posMsg.position.y = pos.y;
