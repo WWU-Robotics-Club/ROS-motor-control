@@ -66,7 +66,7 @@ void moveSpeedCallback( const std_msgs::Float32& speed) {
 ros::NodeHandle node;
 geometry_msgs::Twist velMsg;
 geometry_msgs::Pose posMsg;
-ros::Publisher velocityPub("/wheels/odom_velocity",&posMsg);
+ros::Publisher velocityPub("/wheels/odom_velocity",&velMsg);
 ros::Publisher positionPub("/wheels/odom_position",&posMsg);
 
 ros::Subscriber<geometry_msgs::Twist> velocitySub("/wheels/cmd_velocity", velocityCallback);
@@ -127,6 +127,8 @@ void setup() {
   node.subscribe(velocitySub);
   node.subscribe(moveSub);
   node.subscribe(moveSpeedSub);
+  node.advertise(velocityPub);
+  node.advertise(positionPub);
 #endif
 #if defined(__IMXRT1062__) // Teensy 4.0
   // Set their PWM frequency to something inaudible
@@ -144,21 +146,21 @@ void setup() {
 
 void loop() {
 #ifdef USE_ROS
-  node.spinOnce();
   // publish topics every ROS_PUB_INTERVAL milliseconds
   if (millis() - lastPubTime > ROS_PUB_INTERVAL) {
     lastPubTime = millis();
     Pose2D vel = mecControl.getVelocity();
-    velMsg.linear.x = vel.x;
-    velMsg.linear.y = vel.y;
-    velMsg.angular.z = vel.theta;
+    velMsg.linear.x = (float)vel.x;
+    velMsg.linear.y = (float)vel.y;
+    velMsg.angular.z = (float)vel.theta;
     Pose2D pos = mecControl.getPosition();
-    posMsg.position.x = pos.x;
-    posMsg.position.y = pos.y;
-    posMsg.orientation.z = pos.theta;
+    posMsg.position.x = (float)pos.x;
+    posMsg.position.y = (float)pos.y;
+    posMsg.orientation.z = (float)pos.theta;
     velocityPub.publish(&velMsg);
     positionPub.publish(&posMsg);
   }
+  node.spinOnce();
 #else
   if(Serial.available() > 0) {
     Serial.readBytesUntil(';', serialData, 31);
