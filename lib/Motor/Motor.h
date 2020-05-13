@@ -5,19 +5,19 @@
 // https://playground.arduino.cc/Code/PIDLibrary/
 #include <PID_v1.h>
 
-//#define USE_QUADENCODER
+// #define USE_QUADENCODER
 
-#if defined(USE_QUADENCODER) && defined(__IMXRT1062__) // Teensy 4.0
+#if defined(USE_QUADENCODER) && defined(__IMXRT1062__)  // Teensy 4.0
   // https://github.com/mjs513/Teensy-4.x-Quad-Encoder-Library
   #include "Quadencoder.h"
   #define Encoder QuadEncoder
   #define USING_QUADENCODER
-#else // Teensy 3.2, etc*/
+#else  // Teensy 3.2, etc*/
   // https://www.pjrc.com/teensy/td_libs_Encoder.html
   #include <Encoder.h>
 #endif
 
-//#define MOTOR_DEBUG
+// #define MOTOR_DEBUG
 
 /*
  * Motor driver class
@@ -27,21 +27,22 @@
 class Motor {
  public:
   Motor(uint8_t IN1, uint8_t IN2, uint8_t PWM, uint8_t STBY,
-  uint8_t encoderA, uint8_t encoderB, int8_t encoderChannel = -1, int feedbackDir = DIRECT, int direction = DIRECT,
-  double vkp=65, double vki=50, double vkd=0,
-  double pkp=8, double pki=0, double pkd=0);
+  uint8_t encoderA, uint8_t encoderB, int8_t encoderChannel = -1,
+  int feedbackDir = DIRECT, int direction = DIRECT,
+  double vkp = 65, double vki = 50, double vkd = 0,
+  double pkp = 8, double pki = 0, double pkd = 0);
   ~Motor();
   void init();
   void setStandby(bool standby);
   void setSampleTimeMs(uint16_t ms);
   void setCountsPerRev(uint16_t counts);
   void setOutputLimit(int16_t limit);  // set the max analogWrite value
-  void setPositionSpeed(double limit);  // set max target rad/s used by setPosition
+  void setPositionSpeed(double limit);  // set max rad/s used by setPosition
   void setPidEnabled(bool enable);
   void setVelTunings(double kp, double ki, double kd);
   void setPosTunings(double kp, double ki, double kd);
   double getPosition();  // get position in rad
-  void setPosition(double pos); // set position in rad
+  void setPosition(double pos);  // set position in rad
   double getVelocity();  // get velocity in rad/s
   void setVelocity(double vel);  //  set velocity in rad/s
   void setAcceleration(double accel);  //  set acceleration in rad/s^2

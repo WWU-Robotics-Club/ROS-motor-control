@@ -1,17 +1,19 @@
 #include "Motor.h"
 
 Motor::Motor(uint8_t IN1, uint8_t IN2, uint8_t PWM, uint8_t STBY,
-  uint8_t encoderA, uint8_t encoderB, int8_t encoderChannel, int feedbackDir, int direction,
+  uint8_t encoderA, uint8_t encoderB, int8_t encoderChannel,
+  int feedbackDir, int direction,
   double vkp, double vki, double vkd,
   double pkp, double pki, double pkd)
   : IN1(IN1), IN2(IN2), PWM(PWM), STBY(STBY),
     A(encoderA), B(encoderB), encoderChannel(encoderChannel),
-    feedbackDir(feedbackDir), direction(direction)
-{
-  velPid = new PID(&velInput, &velOutput, &velSetpoint, vkp, vki, vkd, P_ON_E, feedbackDir);
+    feedbackDir(feedbackDir), direction(direction) {
+  velPid = new PID(&velInput, &velOutput, &velSetpoint,
+    vkp, vki, vkd, P_ON_E, feedbackDir);
   setOutputLimit(outputLimit);
   // position output controls velocity target setpoint
-  posPid = new PID(&posInput, &velTargetSetpoint, &posSetpoint, pkp, pki, pkd, P_ON_E, DIRECT);
+  posPid = new PID(&posInput, &velTargetSetpoint, &posSetpoint,
+    pkp, pki, pkd, P_ON_E, DIRECT);
   setPositionSpeed(posMoveVelocity);
   setSampleTimeMs(sampleTimeMs);
 }
@@ -30,13 +32,13 @@ void Motor::init() {
   pinMode(STBY, OUTPUT);
   // STBY enables the driver
   digitalWrite(STBY, HIGH);
-  
+
   setPidEnabled(true);
 }
 
 void Motor::setStandby(bool standby) {
-  setPidEnabled(!standby); // disable PID if in standby
-  digitalWrite(STBY, !standby); // disable driver if in standby
+  setPidEnabled(!standby);  // disable PID if in standby
+  digitalWrite(STBY, !standby);  // disable driver if in standby
 }
 
 void Motor::setSampleTimeMs(uint16_t ms) {
@@ -55,7 +57,7 @@ void Motor::setPositionSpeed(double limit) {
   posPid->SetOutputLimits(-posMoveVelocity, posMoveVelocity);
 }
 
-// Enable PID control or pass 
+// Enable PID control or pass
 void Motor::setPidEnabled(bool enable) {
   velPid->SetMode(enable ? AUTOMATIC : MANUAL);
   posPid->SetMode(enable ? AUTOMATIC : MANUAL);
@@ -71,9 +73,9 @@ void Motor::setPosTunings(double kp, double ki, double kd) {
 
 double Motor::getPosition() {
   if (direction == REVERSE) {
-    return -(double)encoder->read() * radsPerCount;
+    return -static_cast<double>(encoder->read()) * radsPerCount;
   } else {
-    return (double)encoder->read() * radsPerCount;
+    return static_cast<double>(encoder->read()) * radsPerCount;
   }
 }
 
@@ -111,27 +113,27 @@ void Motor::updateAcceleration() {
 void Motor::update() {
   double currentPos = getPosition();
   int32_t currentTime = millis();
-  double dT = (currentTime - lastTime) / 1000.0; // elapsed time in seconds
+  double dT = (currentTime - lastTime) / 1000.0;  // elapsed time in seconds
   if (controlMode == POS_CONTROL) {
     posInput = currentPos;
     // Compute() sets velTargetSetpoint
-    if(posPid->Compute()) {
+    if (posPid->Compute()) {
       updateAcceleration();
     }
   }
-  velInput = (currentPos - lastPos)/dT; // rads/s
+  velInput = (currentPos - lastPos)/dT;  // rads/s
   if (velPid->Compute()) {
     // handle acceleration
     if (velSetpoint != velTargetSetpoint) {
       // add acceleration if not at target yet
       velSetpoint = velSetpoint + accel;
       // don't allow overshoot
-      if ((accel > 0.0 && velSetpoint - velTargetSetpoint > 0.0) 
+      if ((accel > 0.0 && velSetpoint - velTargetSetpoint > 0.0)
         || (accel < 0.0 && velSetpoint - velTargetSetpoint < 0.0)) {
         velSetpoint = velTargetSetpoint;
       }
     }
-    
+
     lastPos = currentPos;
     lastVel = velInput;
     lastTime = currentTime;
@@ -144,9 +146,9 @@ void Motor::update() {
     // debug
     if (currentTime - lastPrintTime > 200) {
       lastPrintTime = currentTime;
-      
+
 #if defined(MOTOR_DEBUG)
-      //Serial.print(acc >  ? "R," : "F,");
+      // Serial.print(acc >  ? "R," : "F,");
       Serial.print(posSetpoint);
       Serial.print(",");
       Serial.print(currentPos);

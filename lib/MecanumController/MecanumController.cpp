@@ -1,6 +1,7 @@
 #include "MecanumController.h"
 
-MecanumController::MecanumController(Motor* motors, float baseWidth, float baseLength, float wheelRadius)
+MecanumController::MecanumController(
+  Motor* motors, float baseWidth, float baseLength, float wheelRadius)
 : baseWidth(baseWidth), baseLength(baseLength), wheelRadius(wheelRadius) {
   this->motors = motors;
 }
@@ -30,7 +31,7 @@ void MecanumController::update() {
 
 // speed is the max speed for a motor
 void MecanumController::move(const Pose2D &relativePos, double speed) {
-  speed = min(speed, speedLimit) / wheelRadius; // rad/s
+  speed = min(speed, speedLimit) / wheelRadius;  // rad/s
   double wheelRots[NUM_MOTORS];
   getWheelRotations(wheelRots);
 #ifdef MEC_DEBUG
@@ -97,7 +98,7 @@ void MecanumController::setVelocity(const Pose2D &vel) {
 #endif
   // scale speeds so they don't go over a limit
   double highestSpeed = 0.0;
-  for (unsigned int i=0; i<NUM_MOTORS; i++) {
+  for (unsigned int i = 0; i < NUM_MOTORS; i++) {
     if (speeds[i] > highestSpeed) {
       highestSpeed = speeds[i];
     }
@@ -106,7 +107,7 @@ void MecanumController::setVelocity(const Pose2D &vel) {
   if (highestSpeed > speedLimit) {
     scalar = speedLimit / highestSpeed;
   }
-  for (unsigned int i=0; i<NUM_MOTORS; i++) {
+  for (unsigned int i = 0; i < NUM_MOTORS; i++) {
     motors[i].setVelocity(speeds[i] * scalar);
 #ifdef MEC_DEBUG
     Serial.print(speeds[i] * scalar);
@@ -120,7 +121,7 @@ void MecanumController::setVelocity(const Pose2D &vel) {
 
 Pose2D MecanumController::getVelocity() {
   double speeds[NUM_MOTORS];
-  for (unsigned int i=0; i<NUM_MOTORS; i++) {
+  for (unsigned int i = 0; i < NUM_MOTORS; i++) {
     speeds[i] = motors[i].getVelocity();
   }
   return wheelsToPose(speeds);
@@ -145,11 +146,10 @@ void MecanumController::setSpeedLimit(double limit) {
 void MecanumController::poseToWheels(const Pose2D &pose, double* wheels) {
   double xComp[4] = {pose.x, pose.x, pose.x, pose.x};
   double yComp[4] = {pose.y, -pose.y, -pose.y, pose.y};
-  double thetaAdjusted = pose.theta * (baseWidth + baseLength);
-  double rotComp[4] = {thetaAdjusted, thetaAdjusted, -thetaAdjusted, -thetaAdjusted};
-  //double scalar = speedLimit/max(pose.x + pose.y + pose.theta, speedLimit);
-  for (unsigned int i=0; i<NUM_MOTORS; i++) {
-    wheels[i] = (xComp[i] + yComp[i] + rotComp[i]) / wheelRadius;// * scalar;
+  double thetaScaled = pose.theta * (baseWidth + baseLength);
+  double rotComp[4] = {thetaScaled, thetaScaled, -thetaScaled, -thetaScaled};
+  for (unsigned int i=0; i < NUM_MOTORS; i++) {
+    wheels[i] = (xComp[i] + yComp[i] + rotComp[i]) / wheelRadius;
   }
 }
 
@@ -166,7 +166,7 @@ Pose2D MecanumController::wheelsToPose(const double* wheels) {
   pose.theta = (right - left) / (baseWidth + baseLength);
   // median of left and right to cancel out rotation
   pose.x = (left + right) * 0.5;
-  // convert to meters or meters/s. 
+  // convert to meters or meters/s.
   // this could be done at the start by multiplying each wheel by wheelRadius
   pose.x *= wheelRadius;
   pose.y *= wheelRadius;
