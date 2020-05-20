@@ -137,9 +137,9 @@ void Motor::update() {
     lastPos = currentPos;
     lastVel = velInput;
     lastTime = currentTime;
-    // if error is 0, the integral never goes to 0 even if output is zero
-    // prevents wasting power
-    if (velSetpoint == 0.0 && lastVel == 0.0) {
+    // just turn on brakes if we want to stop and velocity is low.
+    // prevents wasting power at idle
+    if (velSetpoint == 0.0 && abs(lastVel) < 0.5) {
       velOutput = 0.0;
     }
     write(velOutput);
