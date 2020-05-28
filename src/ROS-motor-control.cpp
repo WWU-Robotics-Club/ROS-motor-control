@@ -29,7 +29,7 @@
     Motor(26, 27, 22, 31, 4, 5, 3, REVERSE, REVERSE),
     Motor(28, 29, 23, 31, 7, 30, 4, REVERSE, REVERSE)
   };
-#elif defined(__MK20DX256__)  // Teensy 3.2
+#elif defined(__MK20DX256__)  // Teensy 3.2 (not tested much)
   // share STBY pin
   // 3rd pin needs to be PWM capable https://www.pjrc.com/teensy/td_pulse.html
   // the last 2 need to have hardware interrupts

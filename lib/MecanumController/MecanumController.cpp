@@ -1,7 +1,7 @@
 #include "MecanumController.h"
 
 MecanumController::MecanumController(
-  Motor* motors, float baseWidth, float baseLength, float wheelRadius)
+  MotorController* motors, float baseWidth, float baseLength, float wheelRadius)
 : baseWidth(baseWidth), baseLength(baseLength), wheelRadius(wheelRadius) {
   this->motors = motors;
   setSpeedLimit(speedLimitMps);
@@ -10,6 +10,7 @@ MecanumController::MecanumController(
 void MecanumController::init() {
   for (unsigned int i = 0; i < NUM_MOTORS; i++) {
     motors[i].init();
+    motors[i].setStandby(false);
   }
 }
 

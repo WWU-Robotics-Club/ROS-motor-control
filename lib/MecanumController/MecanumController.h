@@ -2,8 +2,7 @@
 #define ARDUINO_ROS_MOTOR_CONTROL_LIB_MECANUMCONTROLLER_MECANUMCONTROLLER_H_
 
 #include  <Arduino.h>
-#include "MecanumController.h"
-#include "Motor.h"
+#include "MotorController.h"
 
 #define NUM_MOTORS 4
 
@@ -33,7 +32,7 @@ Some kinematics based on https://www.hindawi.com/journals/jr/2018/9373580/
 */
 class MecanumController {
  public:
-  MecanumController(Motor* motors, float baseWidth, float baseLength,
+  MecanumController(MotorController* motors, float baseWidth, float baseLength,
     float wheelRadius);
   void init();
   void update();
@@ -53,15 +52,16 @@ class MecanumController {
   void setOutputLimit(int16_t limit);  // set the max analogWrite value
   void setSpeedLimit(double limit);  // set the max target m/s
   enum WheelPositions {W_FR = 0, W_BR = 1, W_FL = 2, W_BL = 3};
-
- private:
-  enum ControlModes { VEL_CONTROL, POS_CONTROL };
-  Motor* motors;
-  int controlMode = POS_CONTROL;
+  
   // Convert pose in m or m/s to wheel revs or revs/s
   void poseToWheels(const Pose2D &pose, double* wheels);
   // Convert wheel revs or revs/s to pose in m or m/s
   Pose2D wheelsToPose(const double* wheels);
+
+ private:
+  enum ControlModes { VEL_CONTROL, POS_CONTROL };
+  MotorController* motors;
+  int controlMode = POS_CONTROL;
   const double baseWidth;
   const double baseLength;
   const double wheelRadius;
